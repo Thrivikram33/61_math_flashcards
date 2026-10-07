@@ -38,17 +38,23 @@ class GameEngine:
         self.generate_new_card()
 
     def generate_new_card(self):
-        self.num_a = random.randint(3, 15)
-        self.num_b = random.randint(2, 12)
-        self.operator = random.choice(["+", "-", "*"])
-        if self.operator == "-" and self.num_a < self.num_b:
-            self.num_a, self.num_b = self.num_b, self.num_a
+        self.operator = random.choice(["+", "-", "*", "/"])
 
-        self.input_box.clear()
+        if self.operator == "/":
+            self.num_b = random.randint(2, 12)
+            quotient = random.randint(2, 10)
+            self.num_a = self.num_b * quotient
+        else:
+            self.num_a = random.randint(3, 15)
+            self.num_b = random.randint(2, 12)
 
-        # Reset timer for the new question
+            if self.operator == "-" and self.num_a < self.num_b:
+                self.num_a, self.num_b = self.num_b, self.num_a
+
         self.time_remaining = self.time_limit
         self.timer_start = pygame.time.get_ticks()
+
+        self.input_box.clear()
 
     def compute_expected_answer(self):
         
@@ -58,6 +64,8 @@ class GameEngine:
             return self.num_a - self.num_b
         elif self.operator == "*":
             return self.num_a * self.num_b
+        elif self.operator == "/":
+            return self.num_a // self.num_b
 
     def submit_answer(self):
         val_str = self.input_box.text.strip()
