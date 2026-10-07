@@ -39,7 +39,12 @@ class GameEngine:
 
     def compute_expected_answer(self):
         
-        return int(f"{self.num_a}{self.num_b}")
+        if self.operator == "+":
+            return self.num_a + self.num_b
+        elif self.operator == "-":
+            return self.num_a - self.num_b
+        elif self.operator == "*":
+            return self.num_a * self.num_b
 
     def submit_answer(self):
         val_str = self.input_box.text.strip()
