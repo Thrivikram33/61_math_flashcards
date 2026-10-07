@@ -1,4 +1,6 @@
 import random
+
+from anyio import current_time
 import pygame
 from game.text_box import TextBox
 
@@ -26,6 +28,10 @@ class GameEngine:
         self.font_card = pygame.font.SysFont(None, 56)
         self.font_btn = pygame.font.SysFont(None, 24)
 
+        self.time_limit = 10
+        self.time_remaining = self.time_limit
+        self.last_time = pygame.time.get_ticks()
+
         self.generate_new_card()
 
     def generate_new_card(self):
@@ -36,6 +42,10 @@ class GameEngine:
             self.num_a, self.num_b = self.num_b, self.num_a
 
         self.input_box.clear()
+
+        # Reset timer for the new question
+        self.time_remaining = self.time_limit
+        self.timer_start = pygame.time.get_ticks()
 
     def compute_expected_answer(self):
         
@@ -77,7 +87,22 @@ class GameEngine:
                 self.submit_answer()
 
     def update(self):
-        pass
+        # Calculate elapsed time
+        current_time = pygame.time.get_ticks()
+        elapsed_time = (current_time - self.timer_start) / 1000.0
+
+        # Update remaining time
+        self.time_remaining = max(0, self.time_limit - elapsed_time)
+
+        # Time has run out
+        if self.time_remaining <= 0:
+            self.total_attempts += 1
+
+            # Show timeout feedback
+            self.feedback = f"Time's up! Answer: {self.expected_answer}"
+
+            # Generate a new question
+            self.generate_new_card()
 
     def render(self, screen):
         screen.fill((25, 29, 37))
@@ -95,6 +120,47 @@ class GameEngine:
         card_str = f"{self.num_a}  {self.operator}  {self.num_b}"
         card_surf = self.font_card.render(card_str, True, (25, 30, 42))
         screen.blit(card_surf, (card_rect.centerx - card_surf.get_width() // 2, card_rect.centery - card_surf.get_height() // 2))
+
+        # ---------------- TIMER BAR ----------------
+        timer_x = 300
+        timer_y = 320
+        timer_width = 300
+        timer_height = 18
+
+        # Timer background
+        pygame.draw.rect(
+            screen,
+            (80, 80, 80),
+            (timer_x, timer_y, timer_width, timer_height),
+            border_radius=5
+        )
+
+        # Remaining time
+        timer_ratio = self.time_remaining / self.time_limit
+        remaining_width = int(timer_width * timer_ratio)
+
+        pygame.draw.rect(
+            screen,
+            (50, 200, 50),
+            (timer_x, timer_y, remaining_width, timer_height),
+            border_radius=5
+        )
+
+        # Timer text
+        timer_text = self.font_hud.render(
+            f"Time: {self.time_remaining:.1f}s",
+            True,
+            (245, 245, 245)
+        )
+
+        screen.blit(
+            timer_text,
+            (
+                self.width // 2 - timer_text.get_width() // 2,
+                timer_y + 25
+            )
+        )
+
 
         self.input_box.render(screen)
 
